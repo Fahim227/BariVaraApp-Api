@@ -1,6 +1,7 @@
 from django.db.models import fields
 from rest_framework import serializers
-from .models import owner,renter,flat_details
+from .models import owner,renter,flat_details, earning, remain
+from barivara_app import models
 
 
 class OwnerSerializer(serializers.ModelSerializer):
@@ -15,6 +16,23 @@ class RenterSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class FlatDetailsSerializer(serializers.ModelSerializer):
+    flat_renter_name = serializers.StringRelatedField(many=False)
     class Meta:
         model = flat_details
+        fields = '__all__'
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        print(type(instance.flat_renter_id))
+        representation['flat_renter_name'] = str(instance.flat_renter_id)
+        return representation
+
+
+class EarningSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = earning
+        fields = '__all__'
+
+class RemainSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = remain
         fields = '__all__'

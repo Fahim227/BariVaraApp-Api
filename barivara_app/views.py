@@ -1,10 +1,13 @@
+import json
+import re
 from django.shortcuts import render
 from django.http import HttpResponse,JsonResponse
 from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .serializers import OwnerSerializer, RenterSerializer
+from .serializers import OwnerSerializer, RenterSerializer, FlatDetailsSerializer
 from .models import owner,renter,flat_details,earning,remain
+import datetime
 # Create your views here.
 # request -> response
 # request handler
@@ -31,8 +34,9 @@ def login(request,type):
         p = request.data['emailOrphone']
         print(p)
         try:
-            owner_check = owner.objects.get(phone = p)
+            owner_check = owner.objects.get(email = p)
             if owner_check.password == request.data['password']:
+                
                 res["id"] = owner_check.owner_id
                 res["response"] = True
                 res["message"] = "Login Successful"
@@ -40,12 +44,13 @@ def login(request,type):
                 res["id"] = None
                 res["response"] = False
                 res["message"] = "Password Incorrect"
-        except:
+        except Exception as e:
+            print(e)
             res["message"] = "Not Registered"
     elif type == "renter":
         p = request.data['emailOrphone']
         try:
-            renter_check = renter.objects.get(phone = p)
+            renter_check = renter.objects.get(email = p)
             if renter_check.password == request.data['password']:
                 res["id"] = renter_check.renter_id
                 res["response"] = True
@@ -61,18 +66,35 @@ def login(request,type):
 
 @api_view(['POST'])
 def register(request,type):
+    res = {
+        "id" : None,
+        "response" : False,
+        "message" : ""
+    }
     if type == "owner":
         serializer = OwnerSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            owner_check = owner.objects.get(phone = request.data['phone'])
+            owner_check.referal_id = owner_check.name+str(owner_check.owner_id)
+            owner_check.save() 
+            res["response"] = True
+            res["message"] = "Registration Successful"
+        else:
+            res["response"] = False
+            res["message"] = "Registration Unsuccessful"
+            print(serializer.errors)
     elif type == "renter":
-        print(request.data['owner_referal_id'])
         serializer = RenterSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            res["response"] = True
+            res["message"] = "Registration Successful"
         else:
+            res["response"] = False
+            res["message"] = "Registration Unsuccessful"
             print(serializer.errors)
-    return HttpResponse('Hello world')
+    return JsonResponse(res)
 
 def addflat(request):
     return HttpResponse('ok')
@@ -90,19 +112,64 @@ def owner_dashboard(request):
 def renter_dashboard(request):
     return HttpResponse('ok')
 
-
+@api_view(['POST'])
 def owner_flatList(request):
-    return HttpResponse('ok')
+    print(request.data['id'])
+    owner_id = request.data['id']
+    print(owner_id)
+    flats = flat_details.objects.filter(flat_owner_id=owner_id)
+    #print(len(flats))
+    res = {
+        "flats": flats
+    }
+    print(res)
+    serializer = FlatDetailsSerializer(flats,many=True)
+    print(serializer.data)
+    return JsonResponse(serializer.data,safe=False)
 
 def renter_flatList(request):
     return HttpResponse('ok')
 
+@api_view(['GET'])
 def renter_list(request):
-    return HttpResponse('ok')
+    id = request.data['id']
+    flats = flat_details.objects.filter(flat_owner_id=id)
+    renters = renter.objects.filter(owner_referal_id = id)
+    serializer = RenterSerializer(renters, many= True)
+    return JsonResponse(serializer.data,safe=False)
+
+@api_view(['GET'])
+def earning_and_remain(request):
+    id = request.data['id']
+    month = request.data['month']
+    earnings = earning.objects.filter(owner_id=id,earning_month=month)
+    res = []
+    for eachEarning in earnings:
+        flat = flat_details.objects.get(flat_id=eachEarning.flat_id.flat_id)
+        _remain = remain.objects.filter(remain_month=month)
+        r = {
+                "flat_id": eachEarning.flat_id.flat_id,
+                "earning_id": eachEarning.earning_id,
+                "flat_number": flat.flat_number,
+                "rent_amount" : flat.rent_amount,
+                "earning": eachEarning.earned_amount,
+            }
+        for eachRemain in _remain:
+            year = datetime.date.today().strftime("%Y")
+            if eachRemain.get_year() == int(year):
+                r["remain"] = eachRemain.remained_amount
+                r["remain_id"] = eachRemain.remaining_id
+        res.append(r)
+    print(res)
+    return JsonResponse(res,safe=False)
+
+def add_earning(request):
+    id = request.data['id']
+    month = request.data['month']
+    flat_number = request.data['flat_number']
+    flat = flat_details.objects.get(flat_owner_id=owner.object.get(owner_id = id),flat_number = flat_number)
+    
 
 
-def earning_list(request):
-    return HttpResponse('ok')
-
-def flat_details(request):
+def flatDetails(request):
     return HttpResponse('')
