@@ -14,6 +14,12 @@ class RenterSerializer(serializers.ModelSerializer):
     class Meta:
         model = renter
         fields = '__all__'
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        renter_id = instance.renter_id
+        representation['flat_number'] = flat_details.objects.get(flat_renter_id = renter_id).flat_number
+        #print(renter_id)
+        return representation
 
 class FlatDetailsSerializer(serializers.ModelSerializer):
     flat_renter_name = serializers.StringRelatedField(many=False)

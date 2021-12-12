@@ -130,13 +130,24 @@ def owner_flatList(request):
 def renter_flatList(request):
     return HttpResponse('ok')
 
-@api_view(['GET'])
+@api_view(['POST'])
 def renter_list(request):
     id = request.data['id']
-    flats = flat_details.objects.filter(flat_owner_id=id)
-    renters = renter.objects.filter(owner_referal_id = id)
-    serializer = RenterSerializer(renters, many= True)
-    return JsonResponse(serializer.data,safe=False)
+    # flats = flat_details.objects.filter(flat_owner_id=id)
+    flats = flat_details.objects.filter(flat_owner_id = id)
+    idList = []
+    for flat in flats:
+        idList.append(flat.flat_renter_id.renter_id)
+    renterInstances = []
+    for i in idList:
+        renterInstances.append(renter.objects.get(renter_id=i))
+    # renters = renter.objects.filter(renter_id=flats.flat_renter_id)
+    serializer = []
+    # print(RenterSerializer(renterInstances[0],many=False).data)
+    for each_renter in renterInstances:
+        # print(RenterSerializer(each_renter, many= False).data)
+        serializer.append(RenterSerializer(each_renter, many= False).data)
+    return JsonResponse(serializer,safe=False)
 
 @api_view(['GET'])
 def earning_and_remain(request):
