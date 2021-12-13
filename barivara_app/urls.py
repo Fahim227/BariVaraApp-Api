@@ -9,4 +9,5 @@ urlpatterns = [
     path('ownerFlatList/',views.owner_flatList,name='ownerFlatList'), 
     path('renterList/',views.renter_list,name='renterList'), 
     path('earningAndRemain/',views.earning_and_remain,name='earningAndRemain'), 
+    path('currentMonthEarning/',views.current_month_earning,name='currentMonthEarning'), 
 ]

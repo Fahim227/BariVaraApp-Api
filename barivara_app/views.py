@@ -5,7 +5,7 @@ from django.http import HttpResponse,JsonResponse
 from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .serializers import OwnerSerializer, RenterSerializer, FlatDetailsSerializer
+from .serializers import EarningSerializer, OwnerSerializer, RenterSerializer, FlatDetailsSerializer
 from .models import owner,renter,flat_details,earning,remain
 import datetime
 # Create your views here.
@@ -108,9 +108,12 @@ def register_as_renter(request):
 def owner_dashboard(request):
     return HttpResponse('ok')
 
-
-def renter_dashboard(request):
-    return HttpResponse('ok')
+@api_view(['POST'])
+def current_month_earning(request):
+    month = request.data['month'].lower()
+    earnings = earning.objects.filter(earning_month=month)
+    serializer = EarningSerializer(earnings,many=True)
+    return JsonResponse(serializer.data,safe=False)
 
 @api_view(['POST'])
 def owner_flatList(request):

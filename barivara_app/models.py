@@ -66,6 +66,7 @@ class remain(models.Model):
     owner_id = models.ForeignKey(owner,on_delete=CASCADE)
     renter_id = models.ForeignKey(renter,on_delete=RESTRICT)
     flat_id = models.ForeignKey(flat_details,on_delete=CASCADE)
+    earning_id = models.ForeignKey(earning,on_delete=CASCADE,default=1)
     date = models.DateField(auto_now=False,auto_now_add=False,default=datetime.datetime.now)
     remain_month = models.CharField(max_length=10,null=True)
     remained_amount = models.FloatField()
