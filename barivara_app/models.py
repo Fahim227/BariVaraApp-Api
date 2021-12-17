@@ -44,7 +44,11 @@ class flat_details(models.Model):
     flat_floor_number = models.CharField(max_length=10)
     flat_description = models.CharField(max_length=1000,default='')
     flat_address = models.CharField(max_length=200,default='')
+    is_rented = models.BooleanField(default=False)
 
+class request_for_rent(models.Model):
+    renter_id = models.ForeignKey(renter,on_delete=CASCADE)
+    flat_id = models.ForeignKey(flat_details,on_delete=CASCADE)
 
 
 

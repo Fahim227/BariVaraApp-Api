@@ -29,6 +29,8 @@ class FlatDetailsSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         print(type(instance.flat_renter_id))
+        flat_owner = owner.objects.get(owner_id = instance.flat_owner_id.owner_id)
+        representation['owner_name'] = flat_owner.name
         representation['flat_renter_name'] = str(instance.flat_renter_id)
         return representation
 
@@ -42,9 +44,12 @@ class EarningSerializer(serializers.ModelSerializer):
         flat = flat_details.objects.get(flat_id = instance.flat_id.flat_id)
         representation['flat_number'] = flat.flat_number
         representation['flat_rent_amount'] = flat.rent_amount
-        remain_obj = remain.objects.get(earning_id = instance.earning_id)
-        representation['remain_amount'] = remain_obj.remained_amount
-        representation['renter_name'] = remain_obj.renter_id.name
+        try:
+            remain_obj = remain.objects.get(earning_id = instance.earning_id)
+            representation['remain_amount'] = remain_obj.remained_amount
+            representation['renter_name'] = remain_obj.renter_id.name
+        except Exception as e:
+            print(e)
         return representation
 
 class RemainSerializer(serializers.ModelSerializer):

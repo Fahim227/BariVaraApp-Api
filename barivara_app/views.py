@@ -6,8 +6,9 @@ from rest_framework import serializers
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import EarningSerializer, OwnerSerializer, RenterSerializer, FlatDetailsSerializer
-from .models import owner,renter,flat_details,earning,remain
+from .models import owner,renter,flat_details,earning,remain,request_for_rent
 import datetime
+from datetime import date
 # Create your views here.
 # request -> response
 # request handler
@@ -20,8 +21,12 @@ def testing(request):
     }
     return JsonResponse(res)
 
-def login_as_renter(request):
-    return HttpResponse('Hwllo')
+@api_view(['POST'])
+def renter_profile(request):
+    id = request.data['id']
+    profile = renter.objects.get(renter_id=id)
+    serializer = RenterSerializer(profile,many=False)
+    return JsonResponse(serializer.data,safe=False)
 
 @api_view(['POST'])
 def login(request,type):
@@ -104,15 +109,61 @@ def addflat(request):
 def register_as_renter(request):
     return HttpResponse('Hello world')
 
+@api_view(['POST'])
+def flats_by_referal(request):
+    referal = request.data['referal']
+    flat_owner = owner.objects.get(referal_id = referal)
+    flats = flat_details.objects.filter(flat_owner_id = flat_owner,is_rented = False)
+    serializer = FlatDetailsSerializer(flats,many = True)
+    print(serializer.data)
+    return JsonResponse(serializer.data,safe=False)
 
-def owner_dashboard(request):
-    return HttpResponse('ok')
+
+@api_view(['POST'])
+def request_to_rent(request):
+    flat_id = request.data['flat_id']
+    renter_id = request.data['renter_id']
+    req = request_for_rent(flat_id=flat_details.objects.get(flat_id = flat_id),renter_id = renter.objects.get(renter_id=renter_id))
+    req.save()
+    res = {
+        "id" : None,
+        "response" : True,
+        "message" : "Done"
+    }
+    return JsonResponse(res,safe=False)
+@api_view(['POST'])
+def renter_flats(request):
+    id = request.data['id']
+    renter_obj = renter.objects.get(renter_id=id)
+    flats = flat_details.objects.filter(flat_renter_id= renter_obj)
+    serializer = FlatDetailsSerializer(flats,many=True)
+    return JsonResponse(serializer.data,safe=False)
+
+
+@api_view(['POST'])
+def flats_by_referal(request):
+    referal = request.data['referal']
+    flat_owner = owner.objects.get(referal_id = referal)
+    flats = flat_details.objects.filter(flat_owner_id = flat_owner,is_rented = False)
+    serializer = FlatDetailsSerializer(flats,many = True)
+    print(serializer.data)
+    return JsonResponse(serializer.data,safe=False)
+
+
 
 @api_view(['POST'])
 def current_month_earning(request):
     month = request.data['month'].lower()
-    earnings = earning.objects.filter(earning_month=month)
-    serializer = EarningSerializer(earnings,many=True)
+    id = request.data['id']
+    print(month,id)
+    year = date.today().year
+    list = []
+    earnings = earning.objects.filter(earning_month=month,owner_id=id)
+    for eachEarning in earnings:
+        if str(eachEarning.earning_date).split("-")[0] == str(year):
+            list.append(eachEarning)
+    print(list)
+    serializer = EarningSerializer(list,many=True)
     return JsonResponse(serializer.data,safe=False)
 
 @api_view(['POST'])
